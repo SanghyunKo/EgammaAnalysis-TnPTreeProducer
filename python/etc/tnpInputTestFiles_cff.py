@@ -25,8 +25,8 @@ filesMiniAOD_UL2016preVFP = {
 }
 
 filesMiniAOD_UL2016postVFP = {
-    'mc':   cms.untracked.vstring(''),
-    'data': cms.untracked.vstring('file:/eos/cms/store/group/phys_egamma/tnpTuples/testFiles/SingleElectron-Run2016F-21Feb2020_UL2016-postVFP.root'),
+    'mc':   cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL16MiniAODv2/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_v17-v1/2530000/795F2115-45FF-6142-9E4F-04DE53E35E39.root'),
+    'data': cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/data/Run2016F/DoubleEG/MINIAOD/UL2016_MiniAODv2-v1/120000/BFCF2C92-9EFC-9245-9729-0205A9B4550E.root'),
 }
 
 filesMiniAOD_UL2018 = {
@@ -35,8 +35,8 @@ filesMiniAOD_UL2018 = {
 }
 
 filesMiniAOD_UL2017 = {
-    'mc' :   cms.untracked.vstring('file:/eos/cms/store/group/phys_egamma/tnpTuples/testFiles/RunIISummer19UL17MiniAOD-DYJetsToLL_M-50.root'),
-    'data' : cms.untracked.vstring('file:/eos/cms/store/group/phys_egamma/tnpTuples/testFiles/SingleElectron-Run2017F-09Aug2019_UL2017.root'),
+    'mc' :   cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL17MiniAODv2/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mc2017_realistic_v9-v2/100000/0100750A-102A-1F47-9717-3DA23076E0CC.root'),
+    'data' : cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/data/Run2017E/DoubleEG/MINIAOD/UL2017_MiniAODv2-v1/2610000/DB6DF6DA-52DA-4646-9E47-42C32ED431B8.root'),
 }
 
 

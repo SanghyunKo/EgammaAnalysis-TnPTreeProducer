@@ -11,6 +11,7 @@ ZVariablesToStore = cms.PSet(
     abseta = cms.string("abs(eta)"),
     pt  = cms.string("pt"),
     mass  = cms.string("mass"),
+    dr = cms.string("deltaR(daughter(0).eta,daughter(0).phi,daughter(1).eta,daughter(1).phi)")
     )   
 
 SCProbeVariablesToStore = cms.PSet(

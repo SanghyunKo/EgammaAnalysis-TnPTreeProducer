@@ -35,7 +35,7 @@ def setTagsProbes(process, options):
                                         bits        = cms.InputTag('TriggerResults::' + options['HLTProcessName']),
                                         objects     = cms.InputTag(hltObjects),
                                         dR          = cms.double(0.3),
-                                        isAND       = cms.bool(True)
+                                        isAND       = cms.bool(False)
                                     )
 
     ##################### PROBE ELECTRONs ###########################
@@ -75,7 +75,7 @@ def setTagsProbes(process, options):
                                         bits        = cms.InputTag('TriggerResults::' + options['HLTProcessName'] ),
                                         objects     = cms.InputTag(hltObjects),
                                         dR          = cms.double(0.3),
-                                        isAND       = cms.bool(True)
+                                        isAND       = cms.bool(False)
                                         )
     if options['useAOD'] : process.probePho = process.goodPhotons.clone()
 
@@ -86,7 +86,7 @@ def setTagsProbes(process, options):
                                              bits         = cms.InputTag('TriggerResults::' + options['HLTProcessName']),
                                              objects      = cms.InputTag(hltObjects),
                                              dR           = cms.double(0.3),
-                                             isAND        = cms.bool(True)
+                                             isAND        = cms.bool(False)
                                         )
 
     process.probeSCEle = cms.EDProducer( SCEleMatcher,
@@ -210,7 +210,7 @@ def setSequences(process, options):
 def setupTreeMaker(process, options) :
     from HLTrigger.HLTfilters.hltHighLevel_cfi import hltHighLevel
     process.hltFilter = hltHighLevel.clone()
-    process.hltFilter.throw = cms.bool(True)
+    process.hltFilter.throw = cms.bool(False)
     process.hltFilter.HLTPaths = options['TnPPATHS']
     process.hltFilter.TriggerResultsTag = cms.InputTag("TriggerResults","",options['HLTProcessName'])
 
