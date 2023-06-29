@@ -35,7 +35,11 @@ def setTagsProbes(process, options):
                                         bits        = cms.InputTag('TriggerResults::' + options['HLTProcessName']),
                                         objects     = cms.InputTag(hltObjects),
                                         dR          = cms.double(0.3),
-                                        isAND       = cms.bool(False)
+                                        isAND       = cms.bool(False),
+                                        jets        = cms.InputTag("slimmedJets"),
+                                        hasJet      = cms.bool(options['hasJet']),
+                                        tightJetId  = cms.InputTag("tightJetId"),
+                                        slimmedElectrons = cms.InputTag("slimmedElectrons")
                                     )
 
     ##################### PROBE ELECTRONs ###########################
@@ -64,7 +68,14 @@ def setTagsProbes(process, options):
       process.probeElePassHLTL1matched        = process.probeElePassHLT.clone()
       process.probeElePassHLTL1matched.inputs = cms.InputTag("probeEleL1matched")
 
+    # tag Ele passHLT
+    process.tagElePassHLT = process.tagEle.clone()
+    process.tagElePassHLT.inputs = cms.InputTag("tagEle")
+    process.tagElePassHLT.isAND  = cms.bool(False)
+
     for flag, filterNames in options['HLTFILTERSTOMEASURE'].iteritems():
+      setattr(process, "tag"+flag, process.tagElePassHLT.clone(filterNames=filterNames))
+
       if 'L1match' in flag: setattr(process, flag, process.probeElePassHLTL1matched.clone(filterNames=filterNames))
       else:                 setattr(process, flag, process.probeElePassHLT.clone(filterNames=filterNames))
 
@@ -181,6 +192,9 @@ def setSequences(process, options):
         process.tagEle
         )
 
+    for flag in options['HLTFILTERSTOMEASURE']:
+        process.tag_sequence += getattr(process, "tag"+flag)
+
     import EgammaAnalysis.TnPTreeProducer.egmPhotonIDModules_cff as egmPhoID
     process.pho_sequence  = cms.Sequence(process.goodPhotons)
     process.pho_sequence += egmPhoID.setIDs(process, options)
@@ -210,7 +224,7 @@ def setSequences(process, options):
 def setupTreeMaker(process, options) :
     from HLTrigger.HLTfilters.hltHighLevel_cfi import hltHighLevel
     process.hltFilter = hltHighLevel.clone()
-    process.hltFilter.throw = cms.bool(False)
+    process.hltFilter.throw = cms.bool(True)
     process.hltFilter.HLTPaths = options['TnPPATHS']
     process.hltFilter.TriggerResultsTag = cms.InputTag("TriggerResults","",options['HLTProcessName'])
 

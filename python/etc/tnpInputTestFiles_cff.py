@@ -26,7 +26,7 @@ filesMiniAOD_UL2016preVFP = {
 
 filesMiniAOD_UL2016postVFP = {
     'mc':   cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL16MiniAODv2/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/106X_mcRun2_asymptotic_v17-v1/2530000/795F2115-45FF-6142-9E4F-04DE53E35E39.root'),
-    'data': cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/data/Run2016F/DoubleEG/MINIAOD/UL2016_MiniAODv2-v1/120000/BFCF2C92-9EFC-9245-9729-0205A9B4550E.root'),
+    'data': cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/data/Run2016F/SingleElectron/MINIAOD/UL2016_MiniAODv2-v2/70000/083DCA26-3C86-5549-B3F3-F4DCDDA4D69A.root'),
 }
 
 filesMiniAOD_UL2018 = {

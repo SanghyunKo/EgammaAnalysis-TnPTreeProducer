@@ -199,6 +199,10 @@ TagVariablesToStore = cms.PSet(
     sc_eta    = cms.string("-log(tan(superClusterPosition.theta/2))"),
     sc_abseta = cms.string("abs(-log(tan(superCluster.position.theta/2)))"),
 
+    Jet_pt    = cms.InputTag("tagEle:jetPt"),
+    Jet_eta   = cms.InputTag("tagEle:jetEta"),
+    Jet_phi   = cms.InputTag("tagEle:jetPhi"),
+
 #    Ele_mHits         = cms.InputTag("eleVarHelper:missinghits"),
     Ele_dz            = cms.InputTag("eleVarHelper:dz"),
     Ele_dxy           = cms.InputTag("eleVarHelper:dxy"),

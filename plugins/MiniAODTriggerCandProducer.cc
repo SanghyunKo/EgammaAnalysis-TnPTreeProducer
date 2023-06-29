@@ -1,7 +1,8 @@
 #include "MiniAODTriggerCandProducer.h"
-  
+#include "EgammaAnalysis/TnPTreeProducer/plugins/WriteValueMap.h"
+
+#include "DataFormats/Common/interface/RefToPtr.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
-#include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Photon.h"
 #include "DataFormats/RecoCandidate/interface/RecoEcalCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoEcalCandidateFwd.h"
@@ -180,6 +181,160 @@ bool MiniAODTriggerCandProducer<reco::RecoEcalCandidate, pat::TriggerObjectStand
   }
 
   return false;
+}
+
+template <>
+MiniAODTriggerCandProducer<pat::Electron, pat::TriggerObjectStandAlone>::MiniAODTriggerCandProducer(const edm::ParameterSet& iConfig ) :
+  filterNames_(iConfig.getParameter<std::vector<std::string> >("filterNames")),
+  inputs_(consumes<edm::RefVector<pat::ElectronCollection>>(iConfig.getParameter<edm::InputTag>("inputs"))),
+  triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
+  triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
+  jets_(consumes<edm::View<pat::Jet>>(iConfig.getParameter<edm::InputTag>("jets"))),
+  tightJetIdToken_(consumes<edm::ValueMap<int>>(iConfig.getParameter<edm::InputTag>("tightJetId"))),
+  slimmedEleToken_(consumes<edm::View<pat::Electron>>(iConfig.getParameter<edm::InputTag>("slimmedElectrons"))),
+  dRMatch_(iConfig.getParameter<double>("dR")),
+  isAND_(iConfig.getParameter<bool>("isAND")),
+  hasJet_(iConfig.getParameter<bool>("hasJet")) {
+
+  if(iConfig.existsAs<edm::InputTag>("triggerEvent"))
+    triggerEvent_ = mayConsume<trigger::TriggerEvent>(iConfig.getParameter<edm::InputTag>("triggerEvent"));
+
+  produces<edm::RefVector<pat::ElectronCollection>>();
+  produces<edm::ValueMap<float>>("jetPt");
+  produces<edm::ValueMap<float>>("jetEta");
+  produces<edm::ValueMap<float>>("jetPhi");
+}
+
+template <>
+void MiniAODTriggerCandProducer<pat::Electron, pat::TriggerObjectStandAlone>::produce(edm::Event &iEvent, const edm::EventSetup &eventSetup) {
+  edm::Handle<edm::TriggerResults> triggerBits;
+  edm::Handle<pat::TriggerObjectStandAloneCollection> triggerObjects;
+
+  edm::Handle<edm::RefVector<pat::ElectronCollection>> inputs;
+  edm::Handle<edm::View<pat::Electron>> slimmedElectrons;
+
+  iEvent.getByToken(triggerBits_, triggerBits);
+  iEvent.getByToken(triggerObjects_, triggerObjects);
+  iEvent.getByToken(inputs_, inputs);
+  iEvent.getByToken(slimmedEleToken_, slimmedElectrons);
+
+  // Create the output collection
+  std::unique_ptr<edm::RefVector<pat::ElectronCollection>> outColRef(new edm::RefVector<pat::ElectronCollection>);
+  std::vector<float> outJetPt, outJetEta, outJetPhi;
+  outJetPt.reserve(slimmedElectrons->size());
+  outJetEta.reserve(slimmedElectrons->size());
+  outJetPhi.reserve(slimmedElectrons->size());
+  std::vector<std::pair<pat::ElectronRef,float>> mapJetPt, mapJetEta, mapJetPhi;
+
+  if (!triggerBits.isValid()) {
+    LogDebug("") << "TriggerResults product not found - returning result=false!";
+    return;
+  }
+
+  const edm::TriggerNames & triggerNames = iEvent.triggerNames(*triggerBits);
+  if (triggerNamesID_ != triggerNames.parameterSetID()) {
+    triggerNamesID_ = triggerNames.parameterSetID();
+    init(*triggerBits, triggerNames);
+  }
+
+  std::vector<pat::JetRef> matchedJets;
+
+  if (hasJet_) {
+    edm::Handle<edm::View<pat::Jet>> jetHandle;
+    iEvent.getByToken(jets_, jetHandle);
+
+    edm::Handle<edm::ValueMap<int>> tightJetIdHandle;
+    iEvent.getByToken(tightJetIdToken_, tightJetIdHandle);
+
+    for (size_t i = 0; i < jetHandle->size(); i++) {
+      pat::JetRef matchedJet;
+      const auto& aJet = jetHandle->refAt(i);
+
+      if ( (*tightJetIdHandle)[aJet]==0 )
+        continue;
+
+      if (filterNames_.size() > 0) {
+        for (size_t f = 0; f < filterNames_.size(); f++) {
+          for (pat::TriggerObjectStandAlone obj : *triggerObjects) {
+            obj.unpackPathNames(triggerNames);
+            obj.unpackFilterLabels(iEvent, *triggerBits);
+
+            if (obj.hasFilterLabel(filterNames_[f])) {
+              float dR = deltaR(aJet->p4(), obj.p4());
+              if (dR < dRMatch_) {
+                matchedJet = aJet.castTo<pat::JetRef>();
+                break;
+              }
+            }
+          }
+
+          if (matchedJet.isNonnull())
+            break;
+        }
+      }
+
+      if (matchedJet.isNonnull())
+        matchedJets.push_back(matchedJet);
+    }
+
+    auto sortByPt = [] (const pat::JetRef& aJet, const pat::JetRef& bJet) { return aJet->pt() > bJet->pt(); };
+
+    if ( matchedJets.size() > 1 )
+      std::partial_sort(matchedJets.begin(),matchedJets.begin()+1,matchedJets.end(),sortByPt);
+  }
+
+  for (size_t i = 0 ; i < inputs->size(); i++) {
+    bool saveObj = true;
+    pat::ElectronRef ref = (*inputs)[i];
+
+    if (filterNames_.size() > 0) {
+      saveObj = onlineOfflineMatching(ref, triggerObjects.product(), filterNames_[0], dRMatch_,triggerBits,triggerNames,iEvent);
+
+      for (size_t f = 1; f < filterNames_.size(); f++) {
+        if (isAND_)
+          saveObj = (saveObj && onlineOfflineMatching(ref, triggerObjects.product(), filterNames_[f], dRMatch_,triggerBits,triggerNames,iEvent));
+        else
+          saveObj = (saveObj || onlineOfflineMatching(ref, triggerObjects.product(), filterNames_[f], dRMatch_,triggerBits,triggerNames,iEvent));
+      }
+    }
+
+    if (saveObj) {
+      if (!matchedJets.empty()) {
+        const pat::JetRef& aJet = matchedJets.front();
+        mapJetPt.push_back(std::make_pair<pat::ElectronRef,float>(pat::ElectronRef(ref),aJet->pt()));
+        mapJetEta.push_back(std::make_pair<pat::ElectronRef,float>(pat::ElectronRef(ref),aJet->eta()));
+        mapJetPhi.push_back(std::make_pair<pat::ElectronRef,float>(pat::ElectronRef(ref),aJet->phi()));
+      }
+
+      outColRef->push_back(ref);
+    }
+  }
+
+  for (size_t i = 0; i < slimmedElectrons->size(); i++) {
+    pat::ElectronRef ref = slimmedElectrons->refAt(i).castTo<pat::ElectronRef>();
+
+    float aJetPt = 0.;
+    float aJetEta = 0.;
+    float aJetPhi = 0.;
+
+    for (size_t iref = 0; iref < mapJetPt.size(); iref++) {
+      if ( ref==mapJetPt.at(iref).first ) {
+        aJetPt = mapJetPt.at(iref).second;
+        aJetEta = mapJetEta.at(iref).second;
+        aJetPhi = mapJetPhi.at(iref).second;
+        break;
+      }
+    }
+
+    outJetPt.emplace_back(aJetPt);
+    outJetEta.emplace_back(aJetEta);
+    outJetPhi.emplace_back(aJetPhi);
+  }
+
+  writeValueMap(iEvent, slimmedElectrons, outJetPt, "jetPt");
+  writeValueMap(iEvent, slimmedElectrons, outJetEta, "jetEta");
+  writeValueMap(iEvent, slimmedElectrons, outJetPhi, "jetPhi");
+  iEvent.put(std::move(outColRef));
 }
 
 typedef MiniAODTriggerCandProducer<reco::GsfElectron, trigger::TriggerObject> GsfElectronTriggerCandProducer;

@@ -89,7 +89,7 @@ def setIDs(process, options):
     addNewProbeModule(probeSequence, 'CutBasedModifiedHEEP', 'egmGsfElectronIDs:modifiedHeepElectronID')
     addNewProbeModule(probeSequence, 'CutBasedModified94XTightV2', 'egmGsfElectronIDs:modifiedCutBasedElectronID-Fall17-94X-V2-tight')
 
-    modifiedHeepCuts = ["MinPt", "GsfEleModifiedDEtaInSeed", "GsfEleDPhiIn", "GsfEleModifiedFull5x5SigmaIEtaIEtaWithSat", "GsfEleModifiedFull5x5E2x5OverE5x5WithSat",
+    modifiedHeepCuts = ["MinPt", "GsfEleModifiedDEtaInSeed", "GsfEleDPhiIn", "GsfEleFull5x5SigmaIEtaIEtaWithSat", "GsfEleModifiedFull5x5E2x5OverE5x5WithSat",
                         "GsfEleHadronicOverEMLinear", "GsfEleValueMapIsoRho", "GsfEleModifiedEmHadD1IsoRho", "GsfEleDxy", "GsfEleMissingHits", "GsfEleEcalDriven"]
 
     for cut in modifiedHeepCuts:

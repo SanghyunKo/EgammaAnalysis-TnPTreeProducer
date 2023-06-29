@@ -15,6 +15,8 @@
 
 #include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
 #include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 
 #include <DataFormats/Math/interface/deltaR.h>
@@ -55,9 +57,13 @@ public:
   edm::EDGetTokenT<trigger::TriggerEvent> triggerEvent_;
   //edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
   edm::EDGetTokenT<UCollection> triggerObjects_;
+  const edm::EDGetTokenT<edm::View<pat::Jet>> jets_;
+  const edm::EDGetTokenT<edm::ValueMap<int>> tightJetIdToken_;
+  const edm::EDGetTokenT<edm::View<pat::Electron>> slimmedEleToken_;
   
   float dRMatch_;
   bool isAND_;
+  bool hasJet_;
   edm::ParameterSetID triggerNamesID_;
   std::map<std::string, unsigned int> trigger_indices;
 };
@@ -69,8 +75,12 @@ template <class T, class U>
     triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
   //triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
     triggerObjects_(consumes<UCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
+    jets_(consumes<edm::View<pat::Jet>>(iConfig.getParameter<edm::InputTag>("jets"))),
+    tightJetIdToken_(consumes<edm::ValueMap<int>>(iConfig.getParameter<edm::InputTag>("tightJetId"))),
+    slimmedEleToken_(consumes<edm::View<pat::Electron>>(iConfig.getParameter<edm::InputTag>("slimmedElectrons"))),
     dRMatch_(iConfig.getParameter<double>("dR")),
-    isAND_(iConfig.getParameter<bool>("isAND")) {
+    isAND_(iConfig.getParameter<bool>("isAND")),
+    hasJet_(iConfig.getParameter<bool>("hasJet")) {
     
     if(iConfig.existsAs<edm::InputTag>("triggerEvent"))
       triggerEvent_  = mayConsume<trigger::TriggerEvent>(iConfig.getParameter<edm::InputTag>("triggerEvent"));
